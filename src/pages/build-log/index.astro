@@ -1,0 +1,17 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getPublished } from '../../lib/content';
+
+const entries = await getPublished('build-log');
+---
+
+<Base title="Build log" description="A running log of what I build, what breaks and what I learn.">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Build log</h1>
+      <p class="lede">What I built, what broke and what I learned, newest first.</p>
+    </div>
+    <EntryList section="build-log" entries={entries} empty="No entries yet." />
+  </div>
+</Base>

@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro';
+import SiteDiagram from '../components/SiteDiagram.astro';
+import EntryList from '../components/EntryList.astro';
+import { getPublished } from '../lib/content';
+
+const [caseStudies, decisions, buildLog] = await Promise.all([
+  getPublished('case-studies'),
+  getPublished('decisions'),
+  getPublished('build-log'),
+]);
+
+const streams = [
+  {
+    section: 'case-studies',
+    title: 'Case studies',
+    intro: 'Real problems, the constraints around them, the architecture I chose and what it cost.',
+    all: { href: '/case-studies/', label: 'All case studies' },
+    entries: caseStudies.slice(0, 3),
+    empty: 'Nothing published here yet. <a href="/build-log/">Follow the build log</a> to see the first one take shape.',
+  },
+  {
+    section: 'decisions',
+    title: 'Decision records',
+    intro: 'Short notes on why I picked one option over another, written when I made the call.',
+    all: { href: '/decisions/', label: 'All decision records' },
+    entries: decisions.slice(0, 3),
+    empty: 'No decision records published yet.',
+  },
+  {
+    section: 'build-log',
+    title: 'Build log',
+    intro: 'What I built, what broke and what I learned, in short entries.',
+    all: { href: '/build-log/', label: 'All build log entries' },
+    entries: buildLog.slice(0, 4),
+    empty: 'No entries yet.',
+  },
+] as const;
+---
+
+<Base home>
+  <section class="hero wrap">
+    <h1>Solutions architecture, worked out in public.</h1>
+    <p class="lede">
+      I'm an IT project manager moving into solutions architecture and AI engineering. This site holds the case
+      studies, decision records and build notes I produce along the way.
+    </p>
+    <ul class="hero-links">
+      <li><a href="/case-studies/">Read the case studies</a></li>
+      <li><a href="/build-log/">Follow the build log</a></li>
+    </ul>
+  </section>
+
+  <SiteDiagram />
+
+  <div class="wrap">
+    {
+      streams.map((stream) => (
+        <section class="stream" aria-labelledby={`stream-${stream.section}`}>
+          <div>
+            <h2 id={`stream-${stream.section}`}>{stream.title}</h2>
+            <p class="stream-intro">{stream.intro}</p>
+            <a class="stream-all" href={stream.all.href}>{stream.all.label}</a>
+          </div>
+          <EntryList section={stream.section} entries={stream.entries} empty={stream.empty} />
+        </section>
+      ))
+    }
+  </div>
+</Base>

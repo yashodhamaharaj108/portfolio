@@ -1,0 +1,19 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getPublished } from '../../lib/content';
+
+const entries = await getPublished('decisions');
+---
+
+<Base title="Decision records" description="Short architecture decision records: the context, the options, the choice and its consequences.">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Decision records</h1>
+      <p class="lede">
+        Short notes on one choice each: the context, the options, what I picked and what follows from it.
+      </p>
+    </div>
+    <EntryList section="decisions" entries={entries} empty="No decision records published yet." />
+  </div>
+</Base>

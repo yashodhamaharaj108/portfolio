@@ -1,0 +1,122 @@
+---
+import '@fontsource-variable/bricolage-grotesque/wdth.css';
+import '@fontsource-variable/literata/wght.css';
+import '@fontsource-variable/literata/wght-italic.css';
+import '../styles/global.css';
+import { SITE } from '../site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  home?: boolean;
+}
+
+const { title, description = SITE.description, home = false } = Astro.props;
+
+const pageTitle = home ? `${SITE.name}: solutions architecture, in public` : title ? `${title} | ${SITE.name}` : SITE.name;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const path = Astro.url.pathname;
+
+const nav = [
+  { href: '/case-studies/', label: 'Case studies' },
+  { href: '/decisions/', label: 'Decisions' },
+  { href: '/build-log/', label: 'Build log' },
+  { href: '/about/', label: 'About' },
+];
+
+const footerLinks = [
+  { href: '/rss.xml', label: 'RSS feed' },
+  SITE.github && { href: SITE.github, label: 'GitHub' },
+  SITE.linkedin && { href: SITE.linkedin, label: 'LinkedIn' },
+  SITE.email && { href: `mailto:${SITE.email}`, label: 'Email' },
+  SITE.repo && { href: SITE.repo, label: 'Source for this site' },
+].filter(Boolean) as { href: string; label: string }[];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#f2f6f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f2229" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content={home ? 'website' : 'article'} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- Apply a saved theme before first paint to avoid a flash. -->
+    <script is:inline>
+      try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="wrap">
+      <header class="site-header">
+        <a class="site-name" href="/">{SITE.name}</a>
+        <nav class="site-nav" aria-label="Main">
+          {
+            nav.map((item) => (
+              <a href={item.href} aria-current={path.startsWith(item.href) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            ))
+          }
+          <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
+        </nav>
+      </header>
+    </div>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>&copy; {new Date().getFullYear()} {SITE.name}</p>
+        <ul>
+          {footerLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        </ul>
+      </div>
+    </footer>
+
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        var button = document.querySelector('[data-theme-toggle]');
+        if (!button) return;
+        function current() {
+          var set = root.dataset.theme;
+          if (set === 'light' || set === 'dark') return set;
+          return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        function label() {
+          button.textContent = current() === 'dark' ? 'Light mode' : 'Dark mode';
+        }
+        label();
+        button.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.dataset.theme = next;
+          try {
+            localStorage.setItem('theme', next);
+          } catch (e) {}
+          label();
+        });
+      })();
+    </script>
+  </body>
+</html>

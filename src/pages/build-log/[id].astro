@@ -1,0 +1,25 @@
+---
+import { render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { getPublished } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const entries = await getPublished('build-log');
+  return entries.map((entry: any) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, summary, date, tags } = entry.data;
+---
+
+<Article section="build-log" title={title} summary={summary} date={date}>
+  {
+    tags.length > 0 && (
+      <li slot="meta" class="meta-group" aria-label="Tags">
+        {tags.map((tag: string) => <span>{tag}</span>)}
+      </li>
+    )
+  }
+  <Content />
+</Article>

@@ -1,0 +1,23 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getPublished } from '../../lib/content';
+
+const entries = await getPublished('case-studies');
+---
+
+<Base title="Case studies" description="Case studies on solutions architecture: the problem, the constraints, the design and the trade-offs.">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Case studies</h1>
+      <p class="lede">
+        Each one covers the problem, the constraints, the architecture I chose, the trade-offs and the outcome.
+      </p>
+    </div>
+    <EntryList
+      section="case-studies"
+      entries={entries}
+      empty='Nothing published here yet. <a href="/build-log/">Follow the build log</a> to see the first one take shape.'
+    />
+  </div>
+</Base>
