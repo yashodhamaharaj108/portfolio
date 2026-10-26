@@ -1,0 +1,63 @@
+---
+import Base from './Base.astro';
+import Giscus from '../components/Giscus.astro';
+import { formatDate, SECTION_PATHS, BACK_LABELS, type Section } from '../lib/content';
+
+interface Props {
+  section: Section;
+  title: string;
+  summary: string;
+  date: Date;
+}
+
+const { section, title, summary, date } = Astro.props;
+---
+
+<Base title={title} description={summary}>
+  <div class="wrap">
+    <article class="article">
+      <header class="article-head">
+        <a class="back-link" href={SECTION_PATHS[section]}>{BACK_LABELS[section]}</a>
+        <h1>{title}</h1>
+        <p class="summary">{summary}</p>
+        <ul class="meta">
+          <li><time datetime={date.toISOString()}>{formatDate(date)}</time></li>
+          <slot name="meta" />
+        </ul>
+      </header>
+      <div class="prose">
+        <slot />
+      </div>
+    </article>
+    <Giscus />
+  </div>
+
+  <!-- Renders ```mermaid code blocks as diagrams. The library only loads when a page has one. -->
+  <script is:inline type="module">
+    const blocks = document.querySelectorAll('pre > code.language-mermaid');
+    if (blocks.length) {
+      try {
+        const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+        const set = document.documentElement.dataset.theme;
+        const dark = set ? set === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: dark ? 'dark' : 'neutral',
+          fontFamily: 'Bricolage Grotesque Variable, system-ui, sans-serif',
+        });
+        const nodes = [];
+        blocks.forEach((code) => {
+          const holder = document.createElement('div');
+          holder.className = 'mermaid';
+          holder.textContent = code.textContent;
+          code.parentElement.replaceWith(holder);
+          nodes.push(holder);
+        });
+        await mermaid.run({ nodes });
+      } catch (error) {
+        // If the library can't load, the diagram source stays visible as code.
+        console.warn('Diagram rendering skipped:', error);
+      }
+    }
+  </script>
+</Base>

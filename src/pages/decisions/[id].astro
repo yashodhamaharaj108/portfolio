@@ -1,0 +1,19 @@
+---
+import { render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { getPublished } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const entries = await getPublished('decisions');
+  return entries.map((entry: any) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, summary, date, status } = entry.data;
+---
+
+<Article section="decisions" title={title} summary={summary} date={date}>
+  <li slot="meta"><span class={`status status--${status.toLowerCase()}`}>{status}</span></li>
+  <Content />
+</Article>

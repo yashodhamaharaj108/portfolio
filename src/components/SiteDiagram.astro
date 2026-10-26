@@ -1,0 +1,46 @@
+---
+// The home page's centrepiece: this site drawn as a small architecture diagram.
+// Solid boxes are live. Dashed boxes are planned and are labelled as such.
+const stages = [
+  { title: 'Write', text: 'Markdown and MDX files in a Git repository.' },
+  { title: 'Build', text: 'Astro turns them into plain, fast static pages.' },
+  { title: 'Check', text: 'GitHub Actions builds every change before it goes live.' },
+  { title: 'Publish', text: 'GitHub Pages serves it over HTTPS.' },
+  { title: 'Read', text: 'www.lekishamaharaj.com', destination: true },
+];
+
+const planned = [
+  { title: 'Discuss', text: 'Comments through GitHub Discussions.' },
+  { title: 'Measure', text: 'Page views without cookies.' },
+];
+---
+
+<section class="diagram wrap" aria-labelledby="diagram-title">
+  <h2 id="diagram-title">How this site works</h2>
+  <p class="diagram-note">
+    Every page here travels this path. Dashed boxes are planned and not built yet.
+  </p>
+
+  <ol class="flow">
+    {
+      stages.map((stage, i) => (
+        <li class:list={['node', { 'node--destination': stage.destination }]} style={`--i: ${i}`}>
+          <h3>{stage.title}</h3>
+          <p>{stage.text}</p>
+        </li>
+      ))
+    }
+  </ol>
+
+  <ul class="planned">
+    {
+      planned.map((item) => (
+        <li class="node node--planned">
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+          <p class="state">Planned</p>
+        </li>
+      ))
+    }
+  </ul>
+</section>

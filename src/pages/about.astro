@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../site';
+---
+
+<Base title="About" description={`About ${SITE.name}: an IT project manager moving into solutions architecture and AI engineering.`}>
+  <div class="wrap">
+    <div class="page-head">
+      <h1>About</h1>
+    </div>
+    <div class="article prose">
+      <p>
+        I'm an IT project manager with about six years of experience running software and implementation projects.
+        I'm now finishing an AI engineering course and aiming at solutions architecture: designing how the pieces of a
+        system fit together and being able to explain why.
+      </p>
+      <p>
+        I built this site to do that work in the open. Case studies show the shape of a system and the trade-offs
+        behind it. Decision records capture a choice while the reasons are still fresh. The build log is the
+        day-to-day: what I tried, what broke, what I changed.
+      </p>
+      <h2>Where to start</h2>
+      <ul>
+        <li><a href="/build-log/">The build log</a> is the best way to follow along.</li>
+        <li><a href="/decisions/">Decision records</a> show how I weigh options.</li>
+        <li><a href="/rss.xml">The RSS feed</a> covers all three.</li>
+      </ul>
+      <p>
+        The source for this site is public on <a href={SITE.repo}>GitHub</a>, so you can see how it's put together.
+      </p>
+    </div>
+  </div>
+</Base>

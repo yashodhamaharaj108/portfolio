@@ -1,0 +1,36 @@
+---
+import { formatDate, SECTION_PATHS, type Section } from '../lib/content';
+
+interface Props {
+  section: Section;
+  entries: any[];
+  empty: string;
+}
+
+const { section, entries, empty } = Astro.props;
+---
+
+{
+  entries.length === 0 ? (
+    <p class="empty" set:html={empty} />
+  ) : (
+    <ul class="rows">
+      {entries.map((entry) => (
+        <li>
+          <div>
+            <h3>
+              <a href={`${SECTION_PATHS[section]}${entry.id}/`}>{entry.data.title}</a>
+            </h3>
+            <p>{entry.data.summary}</p>
+          </div>
+          <div class="when">
+            {entry.data.status && (
+              <span class={`status status--${entry.data.status.toLowerCase()}`}>{entry.data.status}</span>
+            )}
+            <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
