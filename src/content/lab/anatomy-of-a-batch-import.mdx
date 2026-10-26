@@ -1,0 +1,92 @@
+---
+title: 'Anatomy of a batch import'
+summary: 'A reference pipeline for importing a file into a system, with the trade-off behind each stage.'
+date: 2026-10-26
+tags: [architecture, integration, interactive]
+---
+
+import SystemMap from '../../components/SystemMap.astro';
+
+Almost every system I work on has to accept a file from somewhere else and turn it into records. The shape of that pipeline is nearly always the same. What differs is where the design gives something up, and that part rarely makes it into a diagram.
+
+So this diagram is about the trade-offs. Pick a stage to see what that choice costs.
+
+<SystemMap
+  label="A batch import, stage by stage"
+  caption="Six stages. Select one to see what it does and what it costs."
+  stages={[
+    {
+      id: 'receive',
+      title: 'Receive',
+      blurb: 'Take the file and store it untouched.',
+      does: 'Accepts the upload, writes the file to storage exactly as it arrived, records a reference to it, and returns straight away.',
+      costs: 'You keep files you may never process, so you need a retention rule. The person who uploaded gets no immediate answer about whether their file is any good.',
+      instead: [
+        'Parse during the upload request, which gives instant feedback but ties up the request for large files and loses the file entirely if the process dies',
+      ],
+    },
+    {
+      id: 'validate',
+      title: 'Validate',
+      blurb: 'Check the whole file before any of it lands.',
+      does: 'Reads the file end to end and checks structure, required columns, data types and references, collecting every problem against a row number.',
+      costs: 'You read the file twice, once to check and once to load. Rejecting the whole file for one bad row in ten thousand is a miserable experience, so you need a way for people to fix and resubmit.',
+      instead: [
+        'Validate row by row while loading, which is faster but leaves partial imports to reconcile',
+        'Accept the good rows and quarantine the bad ones, which needs a place to hold quarantined rows and someone to work through them',
+      ],
+    },
+    {
+      id: 'queue',
+      title: 'Queue',
+      blurb: 'Hand the work off to run later.',
+      does: 'Puts a job on a queue so the import runs outside the web request, with retries if a step fails for a transient reason.',
+      costs: 'A queue is one more thing to run, watch and reason about. "Submitted" stops meaning "done", so every screen that touches imports now has to show state.',
+      instead: [
+        'Run small files inline and queue only large ones, which keeps the common case simple at the price of maintaining two paths through the same code',
+      ],
+    },
+    {
+      id: 'transform',
+      title: 'Transform',
+      blurb: 'Map their shape onto yours.',
+      does: 'Converts source columns into the target model: renaming fields, applying defaults, resolving codes to identifiers and normalising dates and numbers.',
+      costs: 'This is the part that changes most often. Holding the mapping in code means a deployment every time a source system adds a column.',
+      instead: [
+        'Store the mapping as configuration, which lets it change without a release but turns the mapping into data you have to version, review and test',
+      ],
+    },
+    {
+      id: 'load',
+      title: 'Load',
+      blurb: 'Write it in chunks, each one all or nothing.',
+      does: 'Writes records in batches, each batch in its own transaction, so a failure part way through a file never leaves half a record behind.',
+      costs: 'Long transactions hold locks and block other writers. Chunking fixes that, but it means "all or nothing" becomes "all or nothing per chunk", so a failed run can leave earlier chunks committed.',
+      instead: [
+        'Load into a staging table and swap it in once the whole file is written, which is safer and easier to roll back, at the cost of more storage and another step to operate',
+      ],
+    },
+    {
+      id: 'report',
+      title: 'Report',
+      blurb: 'Say exactly what happened, row by row.',
+      does: 'Produces a result the person can act on: how many records were created, updated and skipped, and which rows failed with the reason for each.',
+      costs: 'Per-row results have to be stored somewhere and eventually expired. For a large file that is a lot of rows to keep.',
+      instead: [
+        'Send a pass or fail notification only, which is cheap to build and guarantees that support will re-run imports just to find out what broke',
+      ],
+    },
+  ]}
+/>
+
+## Why the trade-offs belong in the diagram
+
+A box-and-arrow diagram shows what the system does. It almost never shows what the design gave up, which is the part worth discussing in a review. Writing the cost next to each stage forces the question early, while changing the answer is still cheap.
+
+It also makes the diagram useful later. When someone asks six months on why imports are queued rather than immediate, the reason is next to the box instead of in somebody's memory.
+
+## How this page is built
+
+The diagram is a small Astro component with no framework behind it. It renders as a plain list of stages followed by all of the notes, and a short script upgrades that into something you can click through. If the script never runs, the page still says everything it needs to, and arrow keys move between stages once it does.
+
+The source is in [the repository for this site](https://github.com/yashodhamaharaj108/portfolio), in `src/components/SystemMap.astro`.

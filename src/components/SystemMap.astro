@@ -1,0 +1,201 @@
+---
+/**
+ * An architecture diagram where each stage can be selected to show the
+ * trade-off behind it.
+ *
+ * Without JavaScript the diagram renders as a list of stages followed by every
+ * stage's notes, so the page still says everything it needs to. The script
+ * turns that into a tab list with one panel visible at a time.
+ *
+ * Usage in an MDX entry:
+ *
+ *   import SystemMap from '../../components/SystemMap.astro';
+ *
+ *   <SystemMap
+ *     label="A batch import, stage by stage"
+ *     caption="Pick a stage to see what that choice costs."
+ *     stages={[
+ *       {
+ *         id: 'upload',
+ *         title: 'Upload',
+ *         blurb: 'Take the file and nothing else.',
+ *         does: 'What this stage is responsible for.',
+ *         costs: 'What you give up by doing it this way.',
+ *         instead: ['An alternative', 'Another alternative'],
+ *       },
+ *     ]}
+ *   />
+ */
+
+export interface Stage {
+  /** Used in the markup's ids. Lowercase, no spaces. */
+  id: string;
+  title: string;
+  /** One short line, shown on the stage itself. */
+  blurb: string;
+  /** What the stage is responsible for. */
+  does: string;
+  /** What this choice costs. The reason the diagram exists. */
+  costs: string;
+  /** Options not taken. Optional. */
+  instead?: string[];
+}
+
+interface Props {
+  stages: Stage[];
+  /** Describes the diagram for screen readers. */
+  label: string;
+  /** Optional line under the diagram. */
+  caption?: string;
+}
+
+const { stages, label, caption } = Astro.props;
+
+// Keeps ids unique when a page holds more than one diagram.
+let counter = 0;
+counter = (globalThis as any).__systemMapCount = ((globalThis as any).__systemMapCount ?? 0) + 1;
+const uid = `map${counter}`;
+---
+
+<figure class="system-map" data-system-map aria-label={label}>
+  <ol class="map-flow">
+    {
+      stages.map((stage, i) => (
+        <li>
+          <button
+            type="button"
+            class="map-stage"
+            id={`${uid}-tab-${stage.id}`}
+            data-stage={stage.id}
+            data-index={i}
+          >
+            <span class="map-stage-head">
+              <span class="map-stage-step" aria-hidden="true">{i + 1}</span>
+              <span class="map-stage-title">{stage.title}</span>
+            </span>
+            <span class="map-stage-blurb">{stage.blurb}</span>
+          </button>
+        </li>
+      ))
+    }
+  </ol>
+
+  {caption && <figcaption class="map-caption">{caption}</figcaption>}
+
+  <div class="map-panels">
+    {
+      stages.map((stage) => (
+        <article
+          class="map-panel"
+          id={`${uid}-panel-${stage.id}`}
+          data-panel={stage.id}
+          aria-labelledby={`${uid}-tab-${stage.id}`}
+        >
+          <h3 class="map-panel-title">{stage.title}</h3>
+          <dl>
+            <dt>What it does</dt>
+            <dd>{stage.does}</dd>
+            <dt>What it costs</dt>
+            <dd>{stage.costs}</dd>
+            {stage.instead && stage.instead.length > 0 && (
+              <>
+                <dt>Instead of</dt>
+                <dd>
+                  <ul>
+                    {stage.instead.map((option) => (
+                      <li>{option}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+          </dl>
+        </article>
+      ))
+    }
+  </div>
+</figure>
+
+<script>
+  // Upgrades every diagram on the page from a plain list into a tab list.
+  // Runs once; the markup is already readable before this executes.
+  function setUpSystemMaps() {
+    document.querySelectorAll<HTMLElement>('[data-system-map]').forEach((map) => {
+      const list = map.querySelector<HTMLElement>('.map-flow');
+      const panelWrap = map.querySelector<HTMLElement>('.map-panels');
+      const tabs = Array.from(map.querySelectorAll<HTMLButtonElement>('[data-stage]'));
+      const panels = Array.from(map.querySelectorAll<HTMLElement>('[data-panel]'));
+      if (!list || !panelWrap || tabs.length === 0 || tabs.length !== panels.length) return;
+
+      // Hold the space the tallest panel needs, so selecting a stage doesn't
+      // shift the rest of the page. Measured while all panels are still shown.
+      const reserveHeight = () => {
+        const wasHidden = panels.map((panel) => panel.hidden);
+        panels.forEach((panel) => (panel.hidden = false));
+        const tallest = Math.max(...panels.map((panel) => panel.offsetHeight));
+        panels.forEach((panel, i) => (panel.hidden = wasHidden[i]));
+        if (tallest > 0) panelWrap.style.minHeight = `${tallest}px`;
+      };
+      reserveHeight();
+
+      list.setAttribute('role', 'tablist');
+      list.setAttribute('aria-label', map.getAttribute('aria-label') ?? 'Stages');
+      list.querySelectorAll('li').forEach((item) => item.setAttribute('role', 'presentation'));
+
+      tabs.forEach((tab, i) => {
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', panels[i].id);
+      });
+      panels.forEach((panel, i) => {
+        panel.setAttribute('role', 'tabpanel');
+        panel.setAttribute('tabindex', '0');
+        panel.removeAttribute('aria-labelledby');
+        panel.setAttribute('aria-labelledby', tabs[i].id);
+      });
+
+      let selected = -1;
+      const select = (next: number, moveFocus: boolean) => {
+        const i = (next + tabs.length) % tabs.length;
+        if (i === selected) return;
+        selected = i;
+        tabs.forEach((tab, n) => {
+          const on = n === i;
+          tab.setAttribute('aria-selected', String(on));
+          tab.tabIndex = on ? 0 : -1;
+          panels[n].hidden = !on;
+        });
+        if (moveFocus) {
+          tabs[i].focus();
+          // Keep the chosen stage in view when the diagram scrolls sideways.
+          tabs[i].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+      };
+
+      tabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => select(i, false));
+        tab.addEventListener('keydown', (event) => {
+          const keys: Record<string, number> = {
+            ArrowRight: i + 1,
+            ArrowDown: i + 1,
+            ArrowLeft: i - 1,
+            ArrowUp: i - 1,
+            Home: 0,
+            End: tabs.length - 1,
+          };
+          const next = keys[event.key];
+          if (next === undefined) return;
+          event.preventDefault();
+          select(next, true);
+        });
+      });
+
+      select(0, false);
+      map.dataset.ready = 'true';
+
+      // Panel heights change once the web fonts land.
+      if (document.fonts?.ready) document.fonts.ready.then(reserveHeight).catch(() => {});
+    });
+  }
+
+  setUpSystemMaps();
+</script>

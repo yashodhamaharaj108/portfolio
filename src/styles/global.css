@@ -135,6 +135,9 @@ a:hover {
 }
 
 .wrap {
+  /* width is needed because the header's wrap is a flex child of body, where
+     auto inline margins would otherwise shrink it to fit its contents. */
+  width: 100%;
   max-width: var(--wide);
   margin-inline: auto;
   padding-inline: var(--gutter);
@@ -318,6 +321,8 @@ a:hover {
   font-size: 0.92rem;
   line-height: 1.45;
   color: var(--ink-soft);
+  /* The destination node holds a domain, which has nowhere natural to break. */
+  overflow-wrap: break-word;
 }
 
 .node--destination {
@@ -328,6 +333,10 @@ a:hover {
 
 .node--destination p {
   color: #10252c;
+  /* The address is a label, not prose, and the display face keeps it on one line. */
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 560;
 }
 
 .node--planned {
@@ -388,14 +397,16 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* Draws the path once on load. Kept close to a second end to end, so the
+     diagram is whole before someone has finished reading the heading. */
   .flow > li:not(:last-child)::after {
-    animation: draw-line 0.55s ease-out backwards;
-    animation-delay: calc(0.35s + var(--i) * 0.5s);
+    animation: draw-line 0.3s ease-out backwards;
+    animation-delay: calc(0.15s + var(--i) * 0.2s);
   }
 
   .flow > li:not(:last-child)::before {
-    animation: show-head 0.2s ease-out backwards;
-    animation-delay: calc(0.35s + var(--i) * 0.5s + 0.45s);
+    animation: show-head 0.16s ease-out backwards;
+    animation-delay: calc(0.15s + var(--i) * 0.2s + 0.26s);
   }
 }
 
@@ -812,4 +823,238 @@ a:hover {
 .comments h2 {
   margin-bottom: 1rem;
   font-size: 1.3rem;
+}
+
+/* ------------------------------------------------------------------
+   Wide article (lab entries): diagrams get room, body text stays narrow
+------------------------------------------------------------------- */
+.article--wide {
+  --article: 62rem;
+}
+
+.article--wide .prose > * {
+  max-width: 44rem;
+}
+
+.article--wide .prose > .system-map,
+.article--wide .prose > figure,
+.article--wide .prose > pre,
+.article--wide .prose > table {
+  max-width: none;
+}
+
+
+/* ------------------------------------------------------------------
+   SystemMap: an architecture diagram you can select stages in.
+   Stages run down the left, the selected stage's notes sit beside them,
+   so a diagram of any length fits without scrolling sideways.
+------------------------------------------------------------------- */
+.system-map {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr);
+  column-gap: 2.5rem;
+  margin: 2.5rem 0 0;
+}
+
+.map-flow {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+}
+
+.map-flow > li {
+  position: relative;
+}
+
+/* The line down to the next stage, drawn across the gap. */
+.map-flow > li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 1.6rem;
+  width: 2px;
+  height: 1.4rem;
+  background: var(--signal-strong);
+}
+
+.map-flow > li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: calc(100% + 1.4rem - 9px);
+  left: calc(1.6rem - 3px);
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--signal-strong);
+  border-right: 2px solid var(--signal-strong);
+  transform: rotate(135deg);
+}
+
+.map-stage {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.7rem 0.9rem 0.8rem;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--ground);
+  border: 1.5px solid var(--ink);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.map-stage:hover {
+  border-color: var(--signal-strong);
+}
+
+.map-stage-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.map-stage-step {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 620;
+  color: var(--signal-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-stage-title {
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.map-stage-blurb {
+  font-size: 0.87rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.map-stage[aria-selected='true'] {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #10252c;
+}
+
+.map-stage[aria-selected='true'] .map-stage-step,
+.map-stage[aria-selected='true'] .map-stage-blurb {
+  color: #10252c;
+}
+
+.map-caption {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 1.25rem 0 0;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.map-panels {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  border-left: 1px solid var(--line);
+  padding-left: 2.5rem;
+}
+
+.map-panel + .map-panel {
+  margin-top: 1.75rem;
+}
+
+.map-panel-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.3rem;
+  font-weight: 650;
+}
+
+.map-panel dl {
+  display: grid;
+  gap: 0.35rem 1.5rem;
+  margin: 0;
+}
+
+@media (min-width: 40rem) {
+  .map-panel dl {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
+}
+
+.map-panel dt {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding-top: 0.12rem;
+}
+
+.map-panel dd {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.map-panel dd:last-child {
+  margin-bottom: 0;
+}
+
+.map-panel dd ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.map-panel dd li + li {
+  margin-top: 0.3rem;
+}
+
+/* Once the script has run, one panel shows at a time. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-system-map][data-ready] .map-panel {
+    animation: panel-in 0.14s ease-out;
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 56rem) {
+  .system-map {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-flow,
+  .map-caption,
+  .map-panels {
+    grid-column: 1;
+  }
+
+  .map-flow {
+    grid-row: auto;
+  }
+
+  .map-caption {
+    grid-row: auto;
+  }
+
+  .map-panels {
+    grid-row: auto;
+    margin-top: 1.75rem;
+    padding-left: 0;
+    padding-top: 1.5rem;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
 }

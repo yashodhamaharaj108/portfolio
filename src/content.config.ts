@@ -34,8 +34,17 @@ const buildLog = defineCollection({
   }),
 });
 
+const lab = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/lab' }),
+  schema: z.object({
+    ...common,
+    tags: z.array(z.string()).default([]),
+  }),
+});
+
 export const collections = {
   'case-studies': caseStudies,
   decisions,
   'build-log': buildLog,
+  lab,
 };

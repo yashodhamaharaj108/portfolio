@@ -21,6 +21,7 @@ Node 22.23.4 or newer is required (`.nvmrc` pins 24).
 | Case studies | `src/content/case-studies/` |
 | Decision records | `src/content/decisions/` |
 | Build log | `src/content/build-log/` |
+| Lab (interactive pieces) | `src/content/lab/` |
 | Page layouts and the home-page diagram | `src/layouts/`, `src/components/` |
 | Colours, type and spacing | `src/styles/global.css` |
 | Custom domain | `public/CNAME` and `site` in `astro.config.mjs` |
@@ -42,6 +43,43 @@ draft: true   # hidden from the published site until you remove it or set it to 
 - Case studies can list a `stack`, and build log entries can have `tags`.
 - A ` ```mermaid ` code block renders as a diagram. `src/content/case-studies/template.md` has an example to copy.
 - To check how a draft looks in a production build, run `SHOW_DRAFTS=1 npm run build`.
+
+## Interactive pieces
+
+The lab holds anything that is easier to click through than to read about. Lab entries are `.mdx` rather than `.md`, which lets them import components, and they render in a wider column so diagrams have room.
+
+### The SystemMap component
+
+`src/components/SystemMap.astro` draws an architecture diagram where selecting a stage shows the trade-off behind it. Import it at the top of a lab entry and pass it stages:
+
+```mdx
+import SystemMap from '../../components/SystemMap.astro';
+
+<SystemMap
+  label="A batch import, stage by stage"
+  caption="Select a stage to see what it costs."
+  stages={[
+    {
+      id: 'receive',
+      title: 'Receive',
+      blurb: 'One line, shown on the stage itself.',
+      does: 'What this stage is responsible for.',
+      costs: 'What the choice gives up.',
+      instead: ['An option not taken'],
+    },
+  ]}
+/>
+```
+
+It renders as a plain list plus every stage's notes, then a script upgrades it into a tab list. Nothing breaks if the script never runs, and arrow keys move between stages once it does. `src/content/lab/anatomy-of-a-batch-import.mdx` is a full example.
+
+### Adding something else
+
+Anything client-side works, because the site is static and the browser does the rest.
+
+- **A script is usually enough.** Put a `<script>` in a component or lab entry: canvas, SVG animation, a game loop. It ships only with that page. If the library is large, `await import(...)` it inside the page so it downloads only when someone lands there. `src/layouts/Article.astro` loads Mermaid that way.
+- **A UI framework is one command,** if a piece genuinely needs state: `npx astro add svelte`, then give the component `client:visible` so it hydrates only when scrolled into view.
+- **GitHub Pages runs no server.** There is no backend, no hidden API keys and no shared state between visitors. `localStorage` covers per-browser things like a high score. Anything shared would mean an outside service or moving to a host that runs server code.
 
 ## Publishing
 
