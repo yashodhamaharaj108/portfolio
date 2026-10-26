@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getPublished } from '../../lib/content';
+
+const entries = await getPublished('lab');
+---
+
+<Base title="Lab" description="Interactive diagrams, small tools and experiments you can click through rather than read about.">
+  <div class="wrap">
+    <div class="page-head">
+      <h1>Lab</h1>
+      <p class="lede">
+        Things that are easier to understand by clicking than by reading: interactive diagrams, small tools and
+        experiments.
+      </p>
+    </div>
+    <EntryList section="lab" entries={entries} empty="Nothing in the lab yet." />
+  </div>
+</Base>

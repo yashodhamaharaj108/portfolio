@@ -8,14 +8,16 @@ interface Props {
   title: string;
   summary: string;
   date: Date;
+  // Widens the column so diagrams have room. Body text stays narrow.
+  wide?: boolean;
 }
 
-const { section, title, summary, date } = Astro.props;
+const { section, title, summary, date, wide = false } = Astro.props;
 ---
 
 <Base title={title} description={summary}>
   <div class="wrap">
-    <article class="article">
+    <article class:list={['article', { 'article--wide': wide }]}>
       <header class="article-head">
         <a class="back-link" href={SECTION_PATHS[section]}>{BACK_LABELS[section]}</a>
         <h1>{title}</h1>

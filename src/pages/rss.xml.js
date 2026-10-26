@@ -3,7 +3,7 @@ import { getPublished, SECTION_PATHS } from '../lib/content';
 import { SITE } from '../site';
 
 export async function GET(context) {
-  const sections = ['case-studies', 'decisions', 'build-log'];
+  const sections = ['case-studies', 'decisions', 'build-log', 'lab'];
   const groups = await Promise.all(sections.map((section) => getPublished(section)));
 
   const items = groups

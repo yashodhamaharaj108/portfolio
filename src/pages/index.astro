@@ -4,10 +4,11 @@ import SiteDiagram from '../components/SiteDiagram.astro';
 import EntryList from '../components/EntryList.astro';
 import { getPublished } from '../lib/content';
 
-const [caseStudies, decisions, buildLog] = await Promise.all([
+const [caseStudies, decisions, buildLog, lab] = await Promise.all([
   getPublished('case-studies'),
   getPublished('decisions'),
   getPublished('build-log'),
+  getPublished('lab'),
 ]);
 
 const streams = [
@@ -26,6 +27,14 @@ const streams = [
     all: { href: '/decisions/', label: 'All decision records' },
     entries: decisions.slice(0, 3),
     empty: 'No decision records published yet.',
+  },
+  {
+    section: 'lab',
+    title: 'Lab',
+    intro: 'Interactive diagrams and small experiments. Easier to click through than to read about.',
+    all: { href: '/lab/', label: 'Everything in the lab' },
+    entries: lab.slice(0, 3),
+    empty: 'Nothing in the lab yet.',
   },
   {
     section: 'build-log',
